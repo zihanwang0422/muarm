@@ -1,0 +1,45 @@
+[0.533s] Invoking command in '/home/wzh/Downloads/ros2_ws/src/hw1': PYTHONPATH=/home/wzh/Downloads/ros2_ws/build/hw1/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/wzh/Downloads/ros2_ws/install/hw1/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/hw1 build --build-base /home/wzh/Downloads/ros2_ws/build/hw1/build install --record /home/wzh/Downloads/ros2_ws/build/hw1/install.log --single-version-externally-managed install_data
+[0.659s] running egg_info
+[0.659s] creating ../../build/hw1/hw1.egg-info
+[0.659s] writing ../../build/hw1/hw1.egg-info/PKG-INFO
+[0.659s] writing dependency_links to ../../build/hw1/hw1.egg-info/dependency_links.txt
+[0.659s] writing entry points to ../../build/hw1/hw1.egg-info/entry_points.txt
+[0.659s] writing requirements to ../../build/hw1/hw1.egg-info/requires.txt
+[0.659s] writing top-level names to ../../build/hw1/hw1.egg-info/top_level.txt
+[0.660s] writing manifest file '../../build/hw1/hw1.egg-info/SOURCES.txt'
+[0.660s] reading manifest file '../../build/hw1/hw1.egg-info/SOURCES.txt'
+[0.660s] adding license file 'LICENSE'
+[0.661s] writing manifest file '../../build/hw1/hw1.egg-info/SOURCES.txt'
+[0.661s] running build
+[0.661s] running build_py
+[0.661s] creating /home/wzh/Downloads/ros2_ws/build/hw1/build
+[0.661s] creating /home/wzh/Downloads/ros2_ws/build/hw1/build/lib
+[0.661s] creating /home/wzh/Downloads/ros2_ws/build/hw1/build/lib/hw1
+[0.661s] copying hw1/SOARM101.py -> /home/wzh/Downloads/ros2_ws/build/hw1/build/lib/hw1
+[0.661s] copying hw1/subscriber.py -> /home/wzh/Downloads/ros2_ws/build/hw1/build/lib/hw1
+[0.661s] copying hw1/publisher.py -> /home/wzh/Downloads/ros2_ws/build/hw1/build/lib/hw1
+[0.661s] copying hw1/__init__.py -> /home/wzh/Downloads/ros2_ws/build/hw1/build/lib/hw1
+[0.661s] running install
+[0.661s] running install_lib
+[0.661s] creating /home/wzh/Downloads/ros2_ws/install/hw1/lib/python3.10/site-packages/hw1
+[0.662s] copying /home/wzh/Downloads/ros2_ws/build/hw1/build/lib/hw1/SOARM101.py -> /home/wzh/Downloads/ros2_ws/install/hw1/lib/python3.10/site-packages/hw1
+[0.662s] copying /home/wzh/Downloads/ros2_ws/build/hw1/build/lib/hw1/subscriber.py -> /home/wzh/Downloads/ros2_ws/install/hw1/lib/python3.10/site-packages/hw1
+[0.662s] copying /home/wzh/Downloads/ros2_ws/build/hw1/build/lib/hw1/publisher.py -> /home/wzh/Downloads/ros2_ws/install/hw1/lib/python3.10/site-packages/hw1
+[0.662s] copying /home/wzh/Downloads/ros2_ws/build/hw1/build/lib/hw1/__init__.py -> /home/wzh/Downloads/ros2_ws/install/hw1/lib/python3.10/site-packages/hw1
+[0.662s] byte-compiling /home/wzh/Downloads/ros2_ws/install/hw1/lib/python3.10/site-packages/hw1/SOARM101.py to SOARM101.cpython-310.pyc
+[0.662s] byte-compiling /home/wzh/Downloads/ros2_ws/install/hw1/lib/python3.10/site-packages/hw1/subscriber.py to subscriber.cpython-310.pyc
+[0.662s] byte-compiling /home/wzh/Downloads/ros2_ws/install/hw1/lib/python3.10/site-packages/hw1/publisher.py to publisher.cpython-310.pyc
+[0.662s] byte-compiling /home/wzh/Downloads/ros2_ws/install/hw1/lib/python3.10/site-packages/hw1/__init__.py to __init__.cpython-310.pyc
+[0.662s] running install_data
+[0.662s] creating /home/wzh/Downloads/ros2_ws/install/hw1/share/ament_index
+[0.663s] creating /home/wzh/Downloads/ros2_ws/install/hw1/share/ament_index/resource_index
+[0.663s] creating /home/wzh/Downloads/ros2_ws/install/hw1/share/ament_index/resource_index/packages
+[0.663s] copying resource/hw1 -> /home/wzh/Downloads/ros2_ws/install/hw1/share/ament_index/resource_index/packages
+[0.663s] copying package.xml -> /home/wzh/Downloads/ros2_ws/install/hw1/share/hw1
+[0.663s] running install_egg_info
+[0.664s] Copying ../../build/hw1/hw1.egg-info to /home/wzh/Downloads/ros2_ws/install/hw1/lib/python3.10/site-packages/hw1-0.0.0-py3.10.egg-info
+[0.664s] running install_scripts
+[0.675s] Installing publisher script to /home/wzh/Downloads/ros2_ws/install/hw1/lib/hw1
+[0.675s] Installing subscriber script to /home/wzh/Downloads/ros2_ws/install/hw1/lib/hw1
+[0.675s] writing list of installed files to '/home/wzh/Downloads/ros2_ws/build/hw1/install.log'
+[0.686s] Invoked command in '/home/wzh/Downloads/ros2_ws/src/hw1' returned '0': PYTHONPATH=/home/wzh/Downloads/ros2_ws/build/hw1/prefix_override:/usr/lib/python3/dist-packages/colcon_core/task/python/colcon_distutils_commands:/home/wzh/Downloads/ros2_ws/install/hw1/lib/python3.10/site-packages:${PYTHONPATH} /usr/bin/python3 -W ignore:setup.py install is deprecated -W ignore:easy_install command is deprecated setup.py egg_info --egg-base ../../build/hw1 build --build-base /home/wzh/Downloads/ros2_ws/build/hw1/build install --record /home/wzh/Downloads/ros2_ws/build/hw1/install.log --single-version-externally-managed install_data
