@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SO-ARM100 MuJoCo Model (MJCF)
+  6-DOF Robotic Arm
+  Rotation axes: [Z, X, X, X, Y, X]
+  Units: meters (converted from mm)
+  
+  Link offsets (mm → m):
+    Base → J1:  [0, 0, 0]
+    J1 → J2:    [0, 31.15, 119.7]
+    J2 → J3:    [0, 112.35, -28.0]
+    J3 → J4:    [0, 134.9, 4.85]
+    J4 → J5:    [0, 54.8, 0]
+    J5 → J6:    [0, 31.5, 20.0]
+    J6 → EE:    [0, 76.0, -11.5]
+-->
+<mujoco model="so_arm100">
+  <compiler angle="radian" coordinate="local"/>
+
+  <option timestep="0.002" gravity="0 0 -9.81" integrator="implicit"/>
+
+  <default>
+    <joint damping="0.5" armature="0.01"/>
+    <geom contype="1" conaffinity="1" condim="3" rgba="0.8 0.6 0.2 1" margin="0.001"/>
+    <motor ctrllimited="true"/>
+  </default>
+
+  <asset>
+    <texture type="skybox" builtin="gradient" rgb1="0.3 0.5 0.7" rgb2="0.0 0.0 0.0" width="512" height="512"/>
+    <texture name="texplane" type="2d" builtin="checker" rgb1="0.2 0.3 0.4" rgb2="0.1 0.15 0.2" width="512" height="512"/>
+    <material name="matplane" texture="texplane" texrepeat="5 5" reflectance="0.3"/>
+    <material name="link_mat" rgba="0.7 0.5 0.2 1"/>
+    <material name="joint_mat" rgba="0.3 0.3 0.8 1"/>
+    <material name="ee_mat" rgba="0.9 0.2 0.2 1"/>
+    <material name="base_mat" rgba="0.4 0.4 0.4 1"/>
+    <material name="gripper_mat" rgba="0.2 0.7 0.3 1"/>
+  </asset>
+
+  <worldbody>
+    <!-- Ground plane -->
+    <geom name="floor" type="plane" size="1 1 0.1" pos="0 0 0" material="matplane"/>
+    <light directional="true" diffuse="0.8 0.8 0.8" specular="0.3 0.3 0.3" pos="0 0 3" dir="0 0 -1"/>
+    <light directional="true" diffuse="0.4 0.4 0.4" specular="0.1 0.1 0.1" pos="1 1 2" dir="-0.5 -0.5 -1"/>
+
+    <!-- Target marker (free-floating, for visualization) -->
+    <body name="target" pos="0.2 0.2 0.3">
+      <geom name="target_geom" type="sphere" size="0.015" rgba="1 0 0 0.6" contype="0" conaffinity="0"/>
+    </body>
+
+    <!-- Base -->
+    <body name="base" pos="0 0 0">
+      <geom name="base_geom" type="cylinder" size="0.06 0.015" pos="0 0 0.015" material="base_mat"/>
+      
+      <!-- Link 0 → Joint 1 (Z-axis rotation) -->
+      <!-- Offset: [0, 0, 0] from base, joint at base top -->
+      <body name="link0" pos="0 0 0.03">
+        <geom name="link0_geom" type="cylinder" size="0.025 0.03" material="link_mat"/>
+        
+        <!-- Joint 1: Rotation about Z -->
+        <joint name="joint_1" type="hinge" axis="0 0 1" pos="0 0 0" range="-1.5708 1.5708" damping="1.0"/>
+        
+        <!-- Link 1 → Joint 2 (X-axis rotation) -->
+        <!-- Offset: [0, 31.15, 119.7] mm = [0, 0.03115, 0.1197] m -->
+        <body name="link1" pos="0 0.03115 0.1197">
+          <geom name="link1_lower" type="capsule" fromto="0 -0.015 -0.06 0 0.015 0" size="0.02" material="link_mat"/>
+          <geom name="link1_joint" type="sphere" size="0.022" pos="0 0 0" material="joint_mat"/>
+          
+          <!-- Joint 2: Rotation about X -->
+          <joint name="joint_2" type="hinge" axis="1 0 0" pos="0 0 0" range="0 3.1416" damping="1.0"/>
+          
+          <!-- Link 2 → Joint 3 (X-axis rotation) -->
+          <!-- Offset: [0, 112.35, -28.0] mm = [0, 0.11235, -0.028] m -->
+          <body name="link2" pos="0 0.11235 -0.028">
+            <geom name="link2_geom" type="capsule" fromto="0 -0.056 0.014 0 0.056 -0.014" size="0.018" material="link_mat"/>
+            <geom name="link2_joint" type="sphere" size="0.020" pos="0 0 0" material="joint_mat"/>
+            
+            <!-- Joint 3: Rotation about X -->
+            <joint name="joint_3" type="hinge" axis="1 0 0" pos="0 0 0" range="-2.9671 0.4363" damping="0.8"/>
+            
+            <!-- Link 3 → Joint 4 (X-axis rotation) -->
+            <!-- Offset: [0, 134.9, 4.85] mm = [0, 0.1349, 0.00485] m -->
+            <body name="link3" pos="0 0.1349 0.00485">
+              <geom name="link3_geom" type="capsule" fromto="0 -0.067 -0.002 0 0.067 0.002" size="0.016" material="link_mat"/>
+              <geom name="link3_joint" type="sphere" size="0.018" pos="0 0 0" material="joint_mat"/>
+              
+              <!-- Joint 4: Rotation about X -->
+              <joint name="joint_4" type="hinge" axis="1 0 0" pos="0 0 0" range="-3.1416 3.1416" damping="0.6"/>
+              
+              <!-- Link 4 → Joint 5 (Y-axis rotation) -->
+              <!-- Offset: [0, 54.8, 0] mm = [0, 0.0548, 0] m -->
+              <body name="link4" pos="0 0.0548 0">
+                <geom name="link4_geom" type="capsule" fromto="0 -0.027 0 0 0.027 0" size="0.014" material="link_mat"/>
+                <geom name="link4_joint" type="sphere" size="0.016" pos="0 0 0" material="joint_mat"/>
+                
+                <!-- Joint 5: Rotation about Y -->
+                <joint name="joint_5" type="hinge" axis="0 1 0" pos="0 0 0" range="-1.5708 1.5708" damping="0.5"/>
+                
+                <!-- Link 5 → Joint 6 (X-axis rotation) -->
+                <!-- Offset: [0, 31.5, 20.0] mm = [0, 0.0315, 0.02] m -->
+                <body name="link5" pos="0 0.0315 0.02">
+                  <geom name="link5_geom" type="capsule" fromto="0 -0.015 -0.01 0 0.015 0.01" size="0.012" material="link_mat"/>
+                  <geom name="link5_joint" type="sphere" size="0.014" pos="0 0 0" material="joint_mat"/>
+                  
+                  <!-- Joint 6: Rotation about X -->
+                  <joint name="joint_6" type="hinge" axis="1 0 0" pos="0 0 0" range="-3.1416 3.1416" damping="0.3"/>
+                  
+                  <!-- End Effector / Gripper -->
+                  <!-- Grab offset: [0, 76.0, -11.5] mm = [0, 0.076, -0.0115] m -->
+                  <body name="end_effector" pos="0 0.076 -0.0115">
+                    <geom name="ee_geom" type="box" size="0.015 0.01 0.005" material="ee_mat"/>
+                    <site name="ee_site" pos="0 0 0" size="0.008" rgba="1 1 0 1"/>
+                    
+                    <!-- Gripper fingers (simplified) -->
+                    <geom name="finger_left" type="box" size="0.003 0.025 0.005" pos="0.012 0.015 0" material="gripper_mat"/>
+                    <geom name="finger_right" type="box" size="0.003 0.025 0.005" pos="-0.012 0.015 0" material="gripper_mat"/>
+                  </body>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+
+  <actuator>
+    <motor name="motor_1" joint="joint_1" gear="50" ctrlrange="-1.5708 1.5708"/>
+    <motor name="motor_2" joint="joint_2" gear="80" ctrlrange="0 3.1416"/>
+    <motor name="motor_3" joint="joint_3" gear="60" ctrlrange="-2.9671 0.4363"/>
+    <motor name="motor_4" joint="joint_4" gear="40" ctrlrange="-3.1416 3.1416"/>
+    <motor name="motor_5" joint="joint_5" gear="30" ctrlrange="-1.5708 1.5708"/>
+    <motor name="motor_6" joint="joint_6" gear="20" ctrlrange="-3.1416 3.1416"/>
+  </actuator>
+
+  <sensor>
+    <jointpos name="pos_joint_1" joint="joint_1"/>
+    <jointpos name="pos_joint_2" joint="joint_2"/>
+    <jointpos name="pos_joint_3" joint="joint_3"/>
+    <jointpos name="pos_joint_4" joint="joint_4"/>
+    <jointpos name="pos_joint_5" joint="joint_5"/>
+    <jointpos name="pos_joint_6" joint="joint_6"/>
+    <jointvel name="vel_joint_1" joint="joint_1"/>
+    <jointvel name="vel_joint_2" joint="joint_2"/>
+    <jointvel name="vel_joint_3" joint="joint_3"/>
+    <jointvel name="vel_joint_4" joint="joint_4"/>
+    <jointvel name="vel_joint_5" joint="joint_5"/>
+    <jointvel name="vel_joint_6" joint="joint_6"/>
+    <framepos name="ee_pos" objtype="site" objname="ee_site"/>
+    <framequat name="ee_quat" objtype="site" objname="ee_site"/>
+  </sensor>
+
+</mujoco>

@@ -1,0 +1,8 @@
+mujoco>=3.0.0
+numpy>=1.23
+pandas>=1.5
+matplotlib>=3.5
+scikit-learn>=1.1
+scipy>=1.9
+# Optional — only needed for NN-based IK
+# tensorflow>=2.10
