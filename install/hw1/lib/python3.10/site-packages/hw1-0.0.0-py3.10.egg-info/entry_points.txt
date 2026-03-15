@@ -1,4 +1,0 @@
-[console_scripts]
-publisher = hw1.publisher:main
-subscriber = hw1.subscriber:main
-

@@ -1,0 +1,23 @@
+# Core
+mujoco>=3.0.0
+numpy>=1.23
+scipy>=1.9
+
+# Kinematics (Pinocchio + CasADi for IK)
+pin>=3.0.0
+casadi
+
+# Visualization
+matplotlib>=3.5
+glfw
+
+# Vision
+opencv-python>=4.5
+
+# RL (optional - needed for learning module)
+gymnasium>=0.29
+stable-baselines3>=2.0
+torch>=2.0
+
+# Optional utilities
+pandas>=1.5

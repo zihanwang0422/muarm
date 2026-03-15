@@ -1,0 +1,38 @@
+[project]
+name = "manipulation-mujoco"
+version = "0.1.0"
+description = "MuJoCo-based manipulation environment for Franka Panda robot"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    # Core simulation
+    "mujoco>=3.0.0",
+    "numpy>=1.24",
+    "scipy>=1.10",
+    # Kinematics (Pinocchio + CasADi)
+    "pin>=3.0.0",
+    "casadi",
+    # Visualization & rendering
+    "matplotlib>=3.5",
+    "glfw",
+    # Vision
+    "opencv-python>=4.5",
+    # Reinforcement learning
+    "gymnasium>=0.29",
+    "stable-baselines3>=2.0",
+    "torch>=2.0",
+    "tqdm>=4.67.3",
+    "rich>=14.3.3",
+]
+
+[dependency-groups]
+dev = [
+    "ipython",
+    "jupyterlab",
+    "tensorboard",
+]
+
+[tool.uv]
+# This project is a scripts workspace, not an installable library.
+# uv manages the venv but does not try to build/install the project itself.
+package = false
