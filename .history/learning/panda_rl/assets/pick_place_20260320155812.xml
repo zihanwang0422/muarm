@@ -1,0 +1,10 @@
+<mujoco model="panda_pick_place">
+  <include file="../../../models/franka_emika_panda/scene.xml"/>
+  <worldbody>
+    <site name="target" type="sphere" size="0.02" rgba="1 0 0 0.5" pos="0.55 0 0.25"/>
+    <body name="pick_obj" pos="0.5 0.0 0.025">
+      <freejoint/>
+      <geom type="box" size="0.02 0.02 0.02" rgba="0.9 0.5 0.2 1" mass="0.08" friction="1.0 0.02 0.001"/>
+    </body>
+  </worldbody>
+</mujoco>

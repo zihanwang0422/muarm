@@ -1,0 +1,6 @@
+<mujoco model="panda_reach">
+  <include file="../../models/franka_emika_panda/scene.xml"/>
+  <worldbody>
+    <site name="target" type="sphere" size="0.02" rgba="1 0 0 0.5" pos="0.5 0 0.3"/>
+  </worldbody>
+</mujoco>

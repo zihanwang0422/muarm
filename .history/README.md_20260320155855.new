@@ -1,0 +1,89 @@
+# manipulation_mujoco
+
+## kinematic 模块思维导图
+
+```text
+kinematic
+├── PandaKinematics(class接口)
+│   ├── build_from_mjcf
+│   ├── fk
+│   ├── ik
+│   └── jacobian
+├── TrajectoryGenerator(class接口)
+│   ├── cubic
+│   ├── linear
+│   └── multi_waypoint
+├── FK/run_fk.py
+├── IK/run_ik.py
+└── Trajectory/run_trajectory.py
+```
+
+## learning/panda_rl 模块思维导图
+
+```text
+learning/panda_rl
+├── envs/base_env.py
+│   ├── action -> 笛卡尔增量
+│   ├── _render_callback
+│   └── task接口绑定
+├── envs/tasks
+│   ├── reach.py
+│   ├── push.py
+│   └── pick_place.py
+├── envs/panda_env.py
+├── il/bc.py
+├── assets/*.xml
+└── train.py
+```
+
+## 环境准备
+
+```bash
+cd /home/wzh/manipulation_mujoco
+uv venv
+source .venv/bin/activate
+uv pip install -r requirements.txt
+```
+
+## kinematic 运行命令
+
+```bash
+cd /home/wzh/manipulation_mujoco
+source .venv/bin/activate
+
+python kinematic/FK/run_fk.py
+python kinematic/IK/run_ik.py
+python kinematic/Trajectory/run_trajectory.py
+```
+
+## RL 训练命令
+
+```bash
+cd /home/wzh/manipulation_mujoco
+source .venv/bin/activate
+
+python learning/panda_rl/train.py --mode train --family rl --task reach --algo ppo --timesteps 300000
+python learning/panda_rl/train.py --mode train --family rl --task reach --algo sac --timesteps 300000
+python learning/panda_rl/train.py --mode train --family rl --task push --algo td3 --timesteps 300000
+python learning/panda_rl/train.py --mode train --family rl --task pick_place --algo ddpg --timesteps 300000
+```
+
+## RL 评估命令
+
+```bash
+cd /home/wzh/manipulation_mujoco
+source .venv/bin/activate
+
+python learning/panda_rl/train.py --mode eval --task reach --algo ppo --model-path learning/panda_rl/runs/reach_ppo.zip --episodes 5
+python learning/panda_rl/train.py --mode eval --task push --algo sac --model-path learning/panda_rl/runs/push_sac.zip --episodes 5
+```
+
+## IL(BC) 训练与评估命令
+
+```bash
+cd /home/wzh/manipulation_mujoco
+source .venv/bin/activate
+
+python learning/panda_rl/train.py --mode train --family il --task reach
+python learning/panda_rl/train.py --mode eval --task reach --algo bc --model-path learning/panda_rl/runs/reach_bc.pt --episodes 5
+```
