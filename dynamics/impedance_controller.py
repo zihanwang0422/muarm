@@ -10,11 +10,131 @@ import pinocchio as pin
 SCENE = "models/franka_emika_panda/scene_torque.xml"
 PANDA = "models/franka_emika_panda/panda_motor.xml"
 
+# Joint torque limits: joints 1-4 → ±87 Nm, joints 5-7 → ±12 Nm
+TAU_LIMITS = np.array([87.0, 87.0, 87.0, 87.0, 12.0, 12.0, 12.0])
+
 class FrankaImpedanceDemo(MuJoCoViewer):
-    # --- 阻抗控制参数 ---
-    # 增加 KP 使回弹更有力，增加 KD 防止震荡
+    """Task-space impedance control for Franka Panda.
+
+    Control law (torque control):
+        τ = J^T * (Kp * e - Kd * ẋ) + τ_bias
+    where e = [Δpos ; Δrot] is the 6D Cartesian error and
+    τ_bias = qfrc_bias compensates gravity + Coriolis.
+
+    Interaction modes:
+        float  — gravity compensation only, arm is free to be dragged.
+        return — impedance springs EE back to the equilibrium pose.
+    """
+
+    # Cartesian stiffness / damping (pos xyz, rot xyz)
     KP = np.array([200.0, 200.0, 200.0, 20.0, 20.0, 20.0])
     KD = np.array([120.0, 120.0, 120.0,  5.0,  5.0,  5.0])
+
+    DRAG_DETECT_F  = 1.5   # norm of xfrc_applied that counts as dragging (N)
+    RETURN_TRIGGER = 0.05  # minimum displacement to start return (m)
+    RETURN_DONE    = 0.01  # displacement threshold for return completion (m)
+
+    def runBefore(self):
+        home = self.model.key_qpos[0].copy()
+        self.data.qpos[:] = home
+        mujoco.mj_forward(self.model, self.data)
+
+        self.kin   = PandaKinematics(ee_frame="hand")
+        self.kin.build_from_mjcf(PANDA)
+        self.ee_id = mujoco.mj_name2id(self.model, mujoco.mjtObj.mjOBJ_BODY, "hand")
+
+        self.eq_pos = self.data.body(self.ee_id).xpos.copy()
+        self.eq_R   = quat2rotmat(self.data.body(self.ee_id).xquat.copy())
+
+        self._phase        = "float"
+        self._was_dragging = False
+        self._log_counter  = 0
+
+        print("\n" + "=" * 50)
+        print(" Franka Task-space Impedance Control Demo")
+        print(" 1. Double-click the EE body (hand)")
+        print(" 2. Ctrl + drag to perturb")
+        print(" 3. Release → arm springs back to equilibrium")
+        print("=" * 50 + "\n")
+
+    def runFunc(self):
+        q7  = self.data.qpos[:7].copy()
+        v7  = self.data.qvel[:7].copy()
+        g_tau = self.data.qfrc_bias[:7].copy()   # gravity + Coriolis + centrifugal
+
+        ee_pos  = self.data.body(self.ee_id).xpos.copy()
+        ee_quat = self.data.body(self.ee_id).xquat.copy()
+        R_cur   = quat2rotmat(ee_quat)
+
+        # Jacobian (MuJoCo native, world frame)
+        jacp = np.zeros((3, self.model.nv))
+        jacr = np.zeros((3, self.model.nv))
+        mujoco.mj_jacBody(self.model, self.data, jacp, jacr, self.ee_id)
+        J = np.vstack([jacp, jacr])[:, :7]
+
+        ee_vel = J @ v7                                # 6D EE velocity
+        dist   = np.linalg.norm(ee_pos - self.eq_pos)
+
+        # Drag detection via viewer perturbation force
+        is_dragging = np.linalg.norm(self.data.xfrc_applied[self.ee_id]) > self.DRAG_DETECT_F
+
+        if self._phase == "float":
+            tau_imp = np.zeros(7)
+            if self._was_dragging and not is_dragging and dist > self.RETURN_TRIGGER:
+                self._phase = "return"
+                print(f" [Impedance] Return started — offset {dist * 100:.1f} cm")
+        else:
+            # Position error
+            e_pos = self.eq_pos - ee_pos
+
+            # Rotation error: vee(0.5 * Σ R_cur_i × R_eq_i)
+            # Produces a vector whose direction is the rotation axis needed to
+            # align R_cur → R_eq, with magnitude ≈ sin(θ).
+            e_rot = 0.5 * (
+                np.cross(R_cur[:, 0], self.eq_R[:, 0]) +
+                np.cross(R_cur[:, 1], self.eq_R[:, 1]) +
+                np.cross(R_cur[:, 2], self.eq_R[:, 2])
+            )
+            error = np.concatenate([e_pos, e_rot])
+
+            # Cartesian impedance: F = Kp*e - Kd*ẋ
+            F_cart = self.KP * error - self.KD * ee_vel
+            tau_imp = J.T @ F_cart
+
+            # Periodic debug log (every 200 steps)
+            self._log_counter += 1
+            if self._log_counter % 200 == 0 and np.linalg.norm(error) > 0.02:
+                print(f" [Impedance] dist={dist*100:.1f}cm  "
+                      f"|e_pos|={np.linalg.norm(e_pos)*100:.1f}cm  "
+                      f"|τ_imp|={np.linalg.norm(tau_imp):.1f} Nm")
+
+            if dist < self.RETURN_DONE:
+                self._phase = "float"
+                self._log_counter = 0
+                print(" [Impedance] Returned to equilibrium")
+
+        self._was_dragging = is_dragging
+
+        # Final torque = impedance + gravity compensation
+        # Clip per-joint to physical limits
+        tau_final = tau_imp + g_tau
+        self.data.ctrl[:7] = np.clip(tau_final, -TAU_LIMITS, TAU_LIMITS)
+
+        # Visualise: equilibrium (yellow sphere) and current EE (green sphere)
+        self.handle.user_scn.ngeom = 0
+        self.add_visual_geom(
+            [self.eq_pos, ee_pos],
+            ["sphere", "sphere"],
+            [[0.03], [0.02]],
+            [[1, 0.8, 0, 0.8], [0, 1, 0, 0.8]]
+        )
+        if self._phase == "return":
+            self.add_visual_lines([(ee_pos, self.eq_pos)], rgba=[1, 0, 0, 0.8])
+
+
+if __name__ == "__main__":
+    FrankaImpedanceDemo(SCENE, distance=2.5, azimuth=-45, elevation=-25).run_loop()
+
 
     # 阈值设置
     DRAG_DETECT_F  = 1.5   # 检测拖拽力

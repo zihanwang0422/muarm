@@ -1,123 +1,168 @@
-# manipulation_mujoco
+# 🦾 muarm
 
-## kinematic 模块思维导图
+Robot arm kinematics and manipulation learning in MuJoCo physics simulation, featuring **Pinocchio-based FK/IK**, **Catmull-Rom trajectory planning**, and a **multi-robot RL/IL training framework** supporting PPO, SAC, TD3, DDPG and Behavior Cloning.
 
-```text
-kinematic
-├── PandaKinematics (class 接口)
-│   ├── build_from_mjcf
-│   ├── fk
-│   ├── ik
-│   └── jacobian
-├── TrajectoryGenerator (class 接口)
-│   ├── cubic / multi_waypoint
-│   ├── catmull_rom  ← 连续闭合轨迹 (8字形)
-│   ├── cartesian_linear
-│   └── cartesian_arc
-├── run_fk.py
-├── run_ik.py
-└── run_trajectory.py  ← 8字形 Lissajous 轨迹演示
+| Trajectory | Impedence Control |
+|:---:|:---:|
+| ![Trajectory](media/ik_panda.gif) | <img src="media/impedence_panda.gif" width="580"> |
+---
+
+
+
+## 📁 Project Structure
+
+```
+manipulation_mujoco/
+├── models/
+│   ├── franka_emika_panda/      # Franka Panda MJCF model + meshes
+│   └── trs_so_arm100/           # TRS SO-ARM100 MJCF model + meshes
+├── kinematic/
+│   ├── panda_kinematics.py      # PandaKinematics — FK / IK / Jacobian (Pinocchio)
+│   ├── trajectory.py            # TrajectoryGenerator — cubic, Catmull-Rom, Cartesian arc
+│   ├── run_fk.py                # Forward kinematics demo
+│   ├── run_ik.py                # Inverse kinematics demo
+│   └── run_trajectory.py        # Figure-8 Lissajous trajectory demo
+├── dynamics/
+│   ├── impedance_controller.py  # Task-space impedance control (τ = J^T K e + τ_bias)
+│   └── admittance_controller.py # Task-space admittance control (virtual ODE + inner PD)
+├── learning/
+│   ├── envs/
+│   │   ├── base_env.py          # MuJocoRobotEnv — robot-agnostic Gymnasium base class
+│   │   ├── registry.py          # make_env("panda"/"so_arm", "reach"/"push"/"pick_place")
+│   │   └── tasks/
+│   │       ├── base_task.py     # BaseTask interface
+│   │       ├── reach.py
+│   │       ├── push.py
+│   │       └── pick_place.py
+│   ├── robots/
+│   │   ├── panda.py             # FrankaPandaEnv (4D Cartesian delta + gripper)
+│   │   └── so_arm.py            # SoArm100Env (6D joint velocity)
+│   ├── algos/
+│   │   ├── rl_trainer.py        # train_rl — PPO/SAC/TD3/DDPG + SuccessRateCallback
+│   │   └── il/
+│   │       └── bc.py            # Behavior Cloning (MLP + CosineAnnealingLR)
+│   ├── utils/
+│   │   └── visualize.py         # MuJoCo overlay helpers
+│   ├── train.py                 # Unified training entry point
+│   └── play.py                  # Real-time policy playback
+├── requirements.txt
+└── pyproject.toml
 ```
 
-## learning 模块思维导图
+---
 
-```text
-learning/
-├── envs/
-│   ├── base_env.py          ← MuJocoRobotEnv 通用基类 (robot-agnostic)
-│   ├── registry.py          ← make_env("panda"/"so_arm", "reach"/"push"/"pick_place")
-│   └── tasks/
-│       ├── base_task.py     ← BaseTask 接口协议
-│       ├── reach.py
-│       ├── push.py
-│       └── pick_place.py
-├── robots/
-│   ├── panda.py             ← FrankaPandaEnv (4D 笛卡尔增量 + 夹爪)
-│   └── so_arm.py            ← SoArm100Env   (6D 关节速度)
-├── algos/
-│   ├── rl_trainer.py        ← train_rl (PPO/SAC/TD3/DDPG + SuccessRateCallback)
-│   └── il/
-│       └── bc.py            ← Behavior Cloning (MLP + cosine LR)
-├── utils/
-│   └── visualize.py         ← MuJoCo overlay helpers
-├── train.py                 ← 训练入口
-└── play.py                  ← 以正常速度可视化回放训练好的策略
-```
-
-## 环境准备
+## 🔧 Installation
 
 ```bash
-cd /home/wzh/manipulation_mujoco
+cd manipulation_mujoco
 uv venv
 source .venv/bin/activate
 uv pip install -r requirements.txt
 ```
 
-## kinematic 运行命令
+---
+
+## 🚀 Usage
+
+### ▶️ Kinematics
 
 ```bash
-cd /home/wzh/manipulation_mujoco
 source .venv/bin/activate
 
+# Forward kinematics
 python kinematic/run_fk.py
+
+# Inverse kinematics
 python kinematic/run_ik.py
-python kinematic/run_trajectory.py     # 8字形连续轨迹
+
+# Figure-8 continuous trajectory with live EE trail
+python kinematic/run_trajectory.py
 ```
 
-## RL 训练命令
+### ▶️ Dynamics — Impedance & Admittance Control
+
+Both demos use torque-controlled actuators (`panda_motor.xml` + `scene_torque.xml`).
+Interact via **Ctrl + drag** in the MuJoCo viewer.
 
 ```bash
-cd /home/wzh/manipulation_mujoco
 source .venv/bin/activate
 
-# --- Headless (快速, 推荐训练) ---
-python learning/train.py --robot panda --task reach    --algo sac  --timesteps 200000
-python learning/train.py --robot panda --task push     --algo td3  --timesteps 300000
+# Impedance control — drag and release, arm springs back
+python dynamics/impedance_controller.py
+
+# Admittance control — arm compliantly follows your applied force
+python dynamics/admittance_controller.py
+```
+
+**Control law summary:**
+
+| | Impedance | Admittance |
+|---|---|---|
+| Input | Displacement `e` | External force `F_ext` |
+| Output | Joint torques directly | Virtual reference → inner PD |
+| Feel | Stiff spring | Soft, mass-damper compliant |
+| Equation | `τ = J^T(Kp·e − Kd·ẋ) + τ_bias` | `M_d·ẍ_v = F_ext − D_d·ẋ_v − K_d·(x_v−x_eq)` |
+
+Tune the parameters at the top of each file:
+
+| Parameter | File | Effect |
+|-----------|------|--------|
+| `KP / KD` | `impedance_controller.py` | Spring stiffness / damping |
+| `M_D` | `admittance_controller.py` | Lower → faster response |
+| `D_D` | `admittance_controller.py` | Higher → smoother motion |
+| `K_D` | `admittance_controller.py` | 0 = free drift, >0 = spring to eq |
+
+### ▶️ RL Training
+
+```bash
+source .venv/bin/activate
+
+# Headless (recommended for speed)
+python learning/train.py --robot panda --task reach     --algo sac  --timesteps 200000
+python learning/train.py --robot panda --task push      --algo td3  --timesteps 300000
 python learning/train.py --robot panda --task pick_place --algo sac --timesteps 500000
 
-# --- 开启实时可视化 (会降低训练速度) ---
+# Enable real-time viewer
 python learning/train.py --robot panda --task reach --algo sac --timesteps 200000 --render
 
-# --- 多并行 env (仅 headless) ---
+# Parallel environments (headless only)
 python learning/train.py --robot panda --task reach --algo sac --timesteps 200000 --n-envs 4
 
-# --- TensorBoard 日志 ---
+# TensorBoard logging
 python learning/train.py --robot panda --task reach --algo sac --timesteps 200000 --tensorboard
 tensorboard --logdir learning/runs/tb
 
-# --- SO-ARM100 ---
+# SO-ARM100
 python learning/train.py --robot so_arm --task reach --algo sac --timesteps 100000
 ```
 
-## IL (Behavior Cloning) 训练命令
+### ▶️ IL — Behavior Cloning
 
 ```bash
-cd /home/wzh/manipulation_mujoco
 source .venv/bin/activate
 
-# 采集启发式演示 + 训练 BC 策略
+# Collect heuristic demos + train BC policy
 python learning/train.py --robot panda --task reach --algo bc
 
-# 可视化采集过程
+# Visualize demo collection
 python learning/train.py --robot panda --task reach --algo bc --render
 ```
 
-## Play – 以正常速度可视化策略
+### ▶️ Play — Real-time Policy Rollout
 
 ```bash
-cd /home/wzh/manipulation_mujoco
 source .venv/bin/activate
 
-# 播放 RL 策略 (SAC reach)
+# RL policy (SAC reach)
 python learning/play.py --robot panda --task reach --algo sac \
     --model learning/runs/panda_reach_sac.zip --episodes 5
 
-# 播放 BC 策略
+# BC policy
 python learning/play.py --robot panda --task reach --algo bc \
     --model learning/runs/panda_reach_bc.pt --episodes 5
 
 # Push / Pick-Place
-python learning/play.py --robot panda --task push      --algo sac \
+python learning/play.py --robot panda --task push       --algo sac \
     --model learning/runs/panda_push_sac.zip
 python learning/play.py --robot panda --task pick_place --algo sac \
     --model learning/runs/panda_pick_place_sac.zip
@@ -127,17 +172,43 @@ python learning/play.py --robot so_arm --task reach --algo sac \
     --model learning/runs/so_arm_reach_sac.zip
 ```
 
-## 模型保存路径规则
+---
+
+## 🎛️ CLI Arguments — `train.py` / `play.py`
+
+| Argument | Default | Description |
+|----------|---------|-------------|
+| `--robot` | `panda` | `panda` \| `so_arm` |
+| `--task` | `reach` | `reach` \| `push` \| `pick_place` |
+| `--algo` | `sac` | `ppo` \| `sac` \| `td3` \| `ddpg` \| `bc` |
+| `--timesteps` | `200000` | Total RL training steps |
+| `--n-envs` | `1` | Number of parallel environments |
+| `--render` | `False` | Enable MuJoCo real-time viewer |
+| `--tensorboard` | `False` | Enable TensorBoard logging |
+| `--save-dir` | `learning/runs` | Model save directory |
+| `--model` | — | Path to saved model (play only) |
+| `--episodes` | `10` | Rollout episodes (play only) |
+
+---
+
+## 🗂️ Model Save Paths
 
 ```
-learning/runs/{robot}_{task}_{algo}.zip   ← RL (SB3)
-learning/runs/{robot}_{task}_{algo}.pt    ← IL (BC)
+learning/runs/{robot}_{task}_{algo}.zip   ← RL  (Stable-Baselines3)
+learning/runs/{robot}_{task}_{algo}.pt    ← IL  (Behavior Cloning)
 ```
 
-## 扩展新机械臂
+---
 
-1. 在 `learning/robots/` 新建 `my_robot.py`，继承 `MuJocoRobotEnv`
-2. 实现 `_build_spaces / _get_obs / _apply_action / get_ee_pos / get_ee_body`
-3. 在 `learning/envs/registry.py` 的 `make_env` 中添加 `elif robot_key == "my_robot":`
-4. 即可使用相同的 `train.py / play.py` 命令
+## 🔌 Adding a New Robot
+
+1. Create `learning/robots/my_robot.py` inheriting `MuJocoRobotEnv`
+2. Implement `_build_spaces`, `_get_obs`, `_apply_action`, `get_ee_pos`, `get_ee_body`
+3. Register it in `learning/envs/registry.py` under `make_env`
+4. Use the same `train.py` / `play.py` commands with `--robot my_robot`
+
+---
+
+## 📝 TODO
+
 
